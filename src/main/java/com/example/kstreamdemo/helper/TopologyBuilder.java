@@ -1,4 +1,4 @@
-package com.example.kstreamdemo.revision;
+package com.example.kstreamdemo.helper;
 
 import com.example.kstreamdemo.messages.Player;
 import com.example.kstreamdemo.messages.Products;
@@ -11,11 +11,9 @@ import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public class TopologyBuilder {
 

@@ -1,6 +1,6 @@
 package com.example.kstreamdemo;
 
-import com.example.kstreamdemo.revision.TopologyBuilder;
+import com.example.kstreamdemo.helper.TopologyBuilder;
 import org.apache.kafka.streams.KafkaStreams;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
