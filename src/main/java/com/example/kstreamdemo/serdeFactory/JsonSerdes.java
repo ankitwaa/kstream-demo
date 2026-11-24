@@ -5,7 +5,9 @@ import com.example.kstreamdemo.messages.Products;
 import com.example.kstreamdemo.messages.ScoreDetails;
 import com.example.kstreamdemo.messages.ScoreEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -15,94 +17,49 @@ import java.io.IOException;
 
 public class JsonSerdes {
 
-    private final static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
     public static Serde<Player> playerSerde() {
-        Serializer<Player> serializer = (topic, data) -> {
-            try {
-                return objectMapper.writeValueAsBytes(data);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            return null;
-        };
-
-        Deserializer<Player> deserializer = (topic, data) -> {
-            try {
-                return objectMapper.readValue(data, Player.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        };
-
-        return Serdes.serdeFrom(serializer, deserializer);
+        return jsonSerde(Player.class);
     }
 
     public static Serde<ScoreEvent> scoreEventSerde() {
-        Serializer<ScoreEvent> serializer = (topic, data) -> {
-            try {
-                return objectMapper.writeValueAsBytes(data);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            return null;
-        };
-
-        Deserializer<ScoreEvent> deserializer = (topic, data) -> {
-            try {
-                return objectMapper.readValue(data, ScoreEvent.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        };
-
-        return Serdes.serdeFrom(serializer, deserializer);
+        return jsonSerde(ScoreEvent.class);
     }
 
     public static Serde<Products> productsSerde() {
-        Serializer<Products> serializer = (topic, data) -> {
-            try {
-                return objectMapper.writeValueAsBytes(data);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            return null;
-        };
-
-        Deserializer<Products> deserializer = (topic, data) -> {
-            try {
-                return objectMapper.readValue(data, Products.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        };
-
-        return Serdes.serdeFrom(serializer, deserializer);
+        return jsonSerde(Products.class);
     }
 
     public static Serde<ScoreDetails> scoreDetailsSerde() {
-        Serializer<ScoreDetails> serializer = (topic, data) -> {
+        return jsonSerde(ScoreDetails.class);
+    }
+
+    private static <T> Serde<T> jsonSerde(Class<T> type) {
+        Serializer<T> serializer = (topic, data) -> {
+            if (data == null) {
+                return null;
+            }
             try {
                 return objectMapper.writeValueAsBytes(data);
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                throw new SerializationException("Could not serialize " + type.getSimpleName());
             }
-            return null;
         };
 
-        Deserializer<ScoreDetails> deserializer = (topic, data) -> {
-            try {
-                return objectMapper.readValue(data, ScoreDetails.class);
-            } catch (IOException e) {
-                e.printStackTrace();
+        Deserializer<T> deserializer = (topic, data) -> {
+            if (data == null) {
+                return null;
             }
-            return null;
+            try {
+                return objectMapper.readValue(data, type);
+            } catch (IOException ignored) {
+                // Parser messages can include values from the record.
+                throw new SerializationException("Invalid JSON value for " + type.getSimpleName());
+            }
         };
 
         return Serdes.serdeFrom(serializer, deserializer);
     }
-
 }
